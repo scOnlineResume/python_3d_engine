@@ -1,4 +1,6 @@
 # python_3d_engine
+Project inspired by programming YouTuber javidx9.
+
 Requires Python installed on system, and requires Pygame package.
 
 1) Install Python
