@@ -21,3 +21,10 @@ def vector_scale(vector,scaling_factor):
     vec3.append(vector[2]*scaling_factor)
     return vec3
 
+def vector_subtraction(vec1,vec2):
+    vec3 = []
+    vec3.append(vec1[0] - vec2[0])
+    vec3.append(vec1[1] - vec2[1])
+    vec3.append(vec1[2] - vec2[2])
+    return vec3
+

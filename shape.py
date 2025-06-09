@@ -5,18 +5,19 @@ import vector_3D
 
 
 class Shape():
-    def __init__(self,game,camera,coordinates,naam):
+    def __init__(self,level,game, camera, coordinates,naam,scale):
         self.game = game
+        self.level = level
         self.naam = naam
         self.triangle_coordinates = []
         self.triangles = []
-        self.center = coordinates
         self.camera = camera
-        self.load_shape()
+        self.center = coordinates
+        self.load_shape(scale)
 
 
 
-    def load_shape(self):
+    def load_shape(self,scale):
         # Load the shape from the object files
         # From the object file, we can get data on the temp_triangle
         # and we can also get data on the different triangles
@@ -36,7 +37,8 @@ class Shape():
         
         # Save the different lines into the unprocessed lines array
         ## TODO - change to load shape based on user input
-        with open("objects\\" + self.naam) as data_file: 
+        path_to_shape_file = "objects" + f"\{self.naam}"
+        with open(path_to_shape_file) as data_file: 
             for line in data_file:
                 unprocessed_lines.append(line)
 
@@ -46,7 +48,7 @@ class Shape():
                 new_element = element[1:] # Remove the 'v' at start
                 new_element = new_element.split()
                 for index,item in enumerate(new_element):
-                    new_element[index] = float(item)
+                    new_element[index] = float(item) * scale
                 points.append(new_element)
             elif element[0] == "f":
                 new_element = element[1:] # Remove the 'f' at start
@@ -84,7 +86,7 @@ class Shape():
         point1 = vector_3D.vector_addition(point1,self.center)
         point2 = vector_3D.vector_addition(point2,self.center)
 
-        self.triangles.append(Triangle(self.game,self,point0,point1,point2,self.camera))
+        self.triangles.append(Triangle(self.game, self.camera,self,point0,point1,point2))
 
     def populate_triangle_coordinates_array(self,triangle,point):
         point0_index = triangle[0] - 1
@@ -153,7 +155,7 @@ class Shape():
     def helper_return_z_2(self,triangle):
         # NOTE - this function seems to get the average z value for one triangle
         # Get the vertices of the current triangle
-        v0, v1, v2 = triangle.get_vertices()
+        v0, v1, v2 = triangle.get_camera_space_positions()
 
         # Return the average of the z values
         return (v0[2] + v1[2] + v2[2])/3

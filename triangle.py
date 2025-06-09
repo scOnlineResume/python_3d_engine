@@ -2,25 +2,27 @@ import pygame
 import math
 from vertex import Vertex
 import vector_3D
+import unit_circle
+import game_constants
 
 class Triangle():
-    def __init__(self,game,shape,point1,point2,point3,camera):
+    def __init__(self,game,camera,shape,point1,point2,point3):
         self.game = game
         self.shape = shape
+        self.camera = camera
 
         self.p_1 = point1
         self.p_2 = point2
         self.p_3 = point3
 
-        # TEMP Camera
-        self.camera = camera
-
-        self.rotation_speed = 0.005
         # Vertices in 3d space
         self.vertices = []
         self.vertices.append(Vertex(self.game,self,self.shape,point1))
         self.vertices.append(Vertex(self.game,self,self.shape,point2))
         self.vertices.append(Vertex(self.game,self,self.shape,point3))
+
+        # Vertices in Camera space
+        self.camera_space_vertices = []
 
         # Vertices projected on 2d surface
         self.projected_vertices = []
@@ -32,7 +34,7 @@ class Triangle():
 
 
         ## TEMP REMOVE LIGHT SOURCE
-        self.light_source_vector = (0,0,1)
+        self.light_source_vector = self.shape.level.get_light_source()
 
     def update(self,actions):
         ## TODO - when player moves, it changes the camera coordinates.
@@ -42,6 +44,7 @@ class Triangle():
         for vertex in self.vertices:
             vertex.update(actions)
 
+        self.set_camera_space_positions()
         self.set_projected_vertices()
 
         # Update normal
@@ -77,13 +80,17 @@ class Triangle():
         # Compare the normal to the light source vector, and based on that, change the color
         # Both vectors unit vectors, so calculate how "related" by doing dot product.
         normal = vector_3D.dot_product(self.normal,self.light_source_vector)
+
         # Set the value to positive number
-        if normal < 0:
-            normal *= -1
+        #if normal < 0:
+            #normal *= -1
         
         # Adapting the color variable based on whether the normal to the face in the
         # same direction as the light
-        color  = (color[0] * normal,color[1]*normal,color[2]*normal)
+        if normal >= 0:
+            color  = (color[0] * normal,color[1]*normal,color[2]*normal)
+        else:
+            color = (0,0,0)
 
         can_draw = True
         for projected_vertex_to_test in self.projected_vertices:
@@ -102,10 +109,38 @@ class Triangle():
 
 
     def set_projected_vertices(self):
+        ## TODO - change so that camera space positions get used
         self.projected_vertices.clear()
         for vertex in self.vertices:
             new_vertex_projected = vertex.calculate_projected_position()
             self.projected_vertices.append(new_vertex_projected)
+
+    def set_camera_space_positions(self):
+        self.camera_space_vertices.clear()
+        for vertex in self.vertices:
+            p1 = vertex.get_position()
+            # Need to apply horizontal rotation, then vertical rotation, then translation
+
+            # Translation
+            p2 = vector_3D.vector_subtraction(p1,self.camera.get_position())
+
+            # Rotate horizontal
+            camera_space_position = self.look_left_right(p2,self.camera.get_position(),self.camera.get_h_angle())
+
+
+            # Rotate vertical
+
+
+
+            self.camera_space_vertices.append(camera_space_position)
+            vertex.set_camera_space_position(camera_space_position[0],camera_space_position[1],camera_space_position[2])
+
+    def get_camera_space_positions(self):
+        return self.camera_space_vertices
+
+
+
+
 
     def calculate_camera_to_triangle(self):
         # Calculate normal
@@ -115,7 +150,7 @@ class Triangle():
         triangle_midpoint = self.calculate_triangle_midpoint()
 
         # Get line vector from camera to midpoint
-        camera_to_triangle = self.calculate_unit_vector(self.get_line_vector(self.camera,triangle_midpoint))
+        camera_to_triangle = self.calculate_unit_vector(self.get_line_vector(self.camera.pos,triangle_midpoint))
 
         return camera_to_triangle
 
@@ -164,6 +199,57 @@ class Triangle():
 
     def get_vertices(self):
         return self.vertices[0].get_position(), self.vertices[1].get_position(), self.vertices[2].get_position()
+
+
+
+
+    def look_left_right(self,vPos, camera_position, camera_angle):
+        ## TODO - later, this function will be called from Triangle object
+        # then it would return the value.
+
+        # Rotate each vertex around a 2D circle
+        rotation_center = (camera_position[0],vPos[1],camera_position[2])
+
+        # The x-z coordinates relative to center of rotation
+        rel_x_z = (vPos[0] - rotation_center[0] ,vPos[2] - rotation_center[2])
+
+        # Distance between vector and rotation center
+        rel_x_z_magnitude = math.sqrt(rel_x_z[0]**2 + rel_x_z[1]**2)
+        if rel_x_z_magnitude == 0:
+            rel_x_z_magnitude = 0.01
+
+        # Calculate the corresponding normal vector
+        rel_x_z_normal = [rel_x_z[0]/rel_x_z_magnitude,rel_x_z[1]/rel_x_z_magnitude]
+
+        # Calculate angle of the vertex relative to rotation center by considering
+        # whether x and z are positive or negative
+        theta = unit_circle.take_correct_angle(rel_x_z_normal[0],rel_x_z_normal[1])
+
+        # Angle Increment value
+        angle_increment_value = camera_angle  
+
+        # Increment the theta
+        theta += angle_increment_value
+
+        # Calculate new x-z normal
+        new_x_normal = math.cos(theta)
+        new_z_normal = math.sin(theta)
+        rel_x_z_normal = [new_x_normal,new_z_normal]
+
+
+
+        # Multiply normal with the magnitude
+        rel_x_z = [rel_x_z_normal[0] * rel_x_z_magnitude, rel_x_z_normal[1] * rel_x_z_magnitude]
+
+        # Calculate the new point
+        new_point = [rel_x_z[0],vPos[1],rel_x_z[1]]
+        
+        #self.position[0] = new_point[0]
+        #self.position[1] = new_point[1]
+        #self.position[2] = new_point[2]
+
+
+        return new_point
 
 
 

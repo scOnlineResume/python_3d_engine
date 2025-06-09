@@ -13,18 +13,11 @@ class Game():
         self.running, self.playing = True, True
         self.actions = {"left":False,"right":False,"up":False,"down":False,"q":False,"e":False,"arrow_left":False,"arrow_right":False,"arrow_up":False,"arrow_down":False}
         self.dt, self.prev_time = 0,0
+        self.clock = pygame.time.Clock()
 
         self.view_depth_angle = (math.pi)/8  # DO NOT CHANGE THIS, CHANGING WOULD RUIN THE WHOLE ENGINE
 
-
-        ##### Variables related to the camera ####
-        self.camera = [0,0,0]
-        self.camera_angle_left_right = 0
-        self.camera_angle_up_down = 0
-        self.movement_speed = 4
-        self.rotation_speed = 0.00001
-
-        self.level = Level(self,self.camera) 
+        self.level = Level(self) 
 
     def game_loop(self):
         while self.playing:
@@ -100,32 +93,12 @@ class Game():
         self.dt = now - self.prev_time
         self.prev_time = now
 
-    def get_camera(self):
-        return self.camera[0],self.camera[1],self.camera[2]
-
-    def set_camera(self,x,y,z):
-        self.camera[0] = x
-        self.camera[1] = y
-        self.camera[2] = z
+        self.clock.tick(80)
 
 
-    def get_movement_speed(self):
-        return self.movement_speed
-    
-    def get_rotation_speed(self):
-        return self.rotation_speed
 
-    def get_camera_angle_left_right(self):
-        return self.camera_angle_left_right
 
-    def set_camera_angle_left_right(self,value):
-        self.camera_angle_left_right = value
 
-    def get_camera_angle_up_down(self):
-        return self.camera_angle_up_down
-
-    def set_camera_angle_up_down(self, value):
-        self.camera_angle_up_down = value
 
 game_object = Game()
 while game_object.running:
